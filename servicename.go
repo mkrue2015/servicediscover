@@ -68,7 +68,6 @@ func Services(consulAddress string) {
 }
 
 func updateServices(consulAddress string) {
-
 	tick := time.Tick(1 * time.Minute)
 	for range tick {
 		go func() {
@@ -82,9 +81,12 @@ func updateServices(consulAddress string) {
 // Short description
 func ServiceName(consulAddress string, ip string, port int) string {
 	if len(ConsulServices) == 0 {
+		mutex.Lock()
 		Services(consulAddress)
+		mutex.Unlock()
+
+		go updateServices(consulAddress)
 	}
-	go updateServices(consulAddress)
 
 	node := Address{Ip: ip, Port: port}
 	ConsulQueryCount++
