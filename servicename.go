@@ -2,8 +2,8 @@
 package servicediscover
 
 import (
+	"sync"
 	"time"
-  "sync"
 
 	consulapi "github.com/hashicorp/consul/api"
 )
@@ -69,27 +69,29 @@ func Services(consulAddress string) {
 
 func updateServices(consulAddress string) {
 
-	tick := time.NewTicker(1 * time.Minute)
-  for now := <-tick {
-  	go func() {
-      mutex.Lock()
-      defer mutex.Unlock()
-      Services(consulAddress)}()
+	tick := time.Tick(1 * time.Minute)
+	for range tick {
+		go func() {
+			mutex.Lock()
+			defer mutex.Unlock()
+			Services(consulAddress)
+		}()
 	}
 }
 
 // Short description
 func ServiceName(consulAddress string, ip string, port int) string {
 	if len(ConsulServices) == 0 {
-		go updateServices(consulAddress)
+		Services(consulAddress)
 	}
+	go updateServices(consulAddress)
 
 	node := Address{Ip: ip, Port: port}
 	ConsulQueryCount++
-  mutex.Lock()
-  defer mutex.Unlock()
+	mutex.Lock()
+	defer mutex.Unlock()
 
-	result :=  ConsulServices[node]
+	result := ConsulServices[node]
 
-  return result
+	return result
 }
