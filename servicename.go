@@ -39,11 +39,15 @@ func getServiceInfo(consul *consulapi.Client, entry string, tag string) {
 		return
 	}
 	for _, service := range serviceInfo {
+		var vservice Address
 		var node Address
-		node.Ip = service.ServiceAddress
+		node.Ip = service.Address
 		node.Port = service.ServicePort
+		vservice.Ip = service.ServiceAddress
+		vservice.Port = service.ServicePort
 
 		ConsulServices[node] = service.ServiceName
+		ConsulServices[vservice] = service.ServiceName
 	}
 }
 
