@@ -5,22 +5,22 @@ import (
 	"sync"
 	"time"
 
-	consulapi "github.com/hashicorp/consul/api"
+	"github.com/hashicorp/consul/api"
 )
 
 // Short description
 type Address struct {
-	Ip   string
+	IP   string
 	Port int
 }
 
 // Short Description
-var ConsulServices map[Address]string = make(map[Address]string)
-var ConsulQueryCount int = 0
-var mutex sync.Mutex
+var (
+	ConsulServices = make(map[Address]string)
+	mutex          sync.Mutex
+)
 
-// Short description
-func getServices(consul *consulapi.Client) map[string][]string {
+func getServices(consul *api.Client) map[string][]string {
 	catalog := consul.Catalog()
 
 	results, _, err := catalog.Services(nil)
@@ -31,8 +31,7 @@ func getServices(consul *consulapi.Client) map[string][]string {
 	return results
 }
 
-// Short description
-func getServiceInfo(consul *consulapi.Client, entry string, tag string) {
+func getServiceInfo(consul *api.Client, entry string, tag string) {
 	catalog := consul.Catalog()
 	serviceInfo, _, err := catalog.Service(entry, tag, nil)
 	if err != nil {
@@ -41,9 +40,9 @@ func getServiceInfo(consul *consulapi.Client, entry string, tag string) {
 	for _, service := range serviceInfo {
 		var vservice Address
 		var node Address
-		node.Ip = service.Address
+		node.IP = service.Address
 		node.Port = service.ServicePort
-		vservice.Ip = service.ServiceAddress
+		vservice.IP = service.ServiceAddress
 		vservice.Port = service.ServicePort
 
 		ConsulServices[node] = service.ServiceName
@@ -53,9 +52,9 @@ func getServiceInfo(consul *consulapi.Client, entry string, tag string) {
 
 // Short description
 func Services(consulAddress string) {
-	config := consulapi.DefaultConfig()
+	config := api.DefaultConfig()
 	config.Address = consulAddress
-	consul, err := consulapi.NewClient(config)
+	consul, err := api.NewClient(config)
 	if err != nil {
 		return
 	}
@@ -92,8 +91,7 @@ func ServiceName(consulAddress string, ip string, port int) string {
 		go updateServices(consulAddress)
 	}
 
-	node := Address{Ip: ip, Port: port}
-	ConsulQueryCount++
+	node := Address{IP: ip, Port: port}
 	mutex.Lock()
 	defer mutex.Unlock()
 
